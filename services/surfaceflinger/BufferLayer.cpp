@@ -631,7 +631,13 @@ void BufferLayer::setPerFrameData(const sp<const DisplayDevice>& displayDevice) 
         visible.dump(LOG_TAG);
     }
 
-    error = hwcLayer->setSurfaceDamage(surfaceDamageRegion);
+    if(mFlinger->mDamageUsesScreenReference) {
+        const auto& frame = hwcInfo.displayFrame;
+        auto fullSource = Region(Rect(frame.left, frame.top, frame.right, frame.bottom));
+        error = hwcLayer->setSurfaceDamage(fullSource);
+    } else {
+        error = hwcLayer->setSurfaceDamage(surfaceDamageRegion);
+    }
     if (error != HWC2::Error::None) {
         ALOGE("[%s] Failed to set surface damage: %s (%d)", mName.string(),
               to_string(error).c_str(), static_cast<int32_t>(error));
