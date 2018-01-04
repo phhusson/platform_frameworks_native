@@ -384,6 +384,14 @@ SurfaceFlinger::SurfaceFlinger() : SurfaceFlinger(SkipInitialization) {
         // for production purposes later on.
         setenv("TREBLE_TESTING_OVERRIDE", "true", true);
     }
+
+    property_get("ro.hardware", value, "");
+    if(strstr(value, "hi3660")||
+            strstr(value, "hi6250") ||
+            strstr(value, "hi3670") ||
+            strstr(value, "kirin970")) {
+        mDamageUsesScreenReference = true;
+    }
 }
 
 void SurfaceFlinger::onFirstRef()
