@@ -247,6 +247,13 @@ SurfaceFlinger::SurfaceFlinger()
     // but since /data may be encrypted, we need to wait until after vold
     // comes online to attempt to read the property. The property is
     // instead read after the boot animation
+    property_get("ro.hardware", value, "");
+    if(strstr(value, "hi3660")||
+		    strstr(value, "hi6250") ||
+		    strstr(value, "hi3670") ||
+		    strstr(value, "kirin970")) {
+	    mDamageUsesScreenReference = true;
+    }
 }
 
 void SurfaceFlinger::onFirstRef()
