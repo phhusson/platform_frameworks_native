@@ -224,6 +224,13 @@ SurfaceFlinger::SurfaceFlinger()
     property_get("ro.sf.disable_triple_buffer", value, "1");
     mLayerTripleBufferingDisabled = atoi(value);
     ALOGI_IF(mLayerTripleBufferingDisabled, "Disabling Triple Buffering");
+
+    property_get("ro.hardware", value, "");
+    if(strstr(value, "hi3660")||
+		    strstr(value, "hi6250") ||
+		    strstr(value, "hi3670")) {
+	    mDamageUsesScreenReference = true;
+    }
 }
 
 void SurfaceFlinger::onFirstRef()
