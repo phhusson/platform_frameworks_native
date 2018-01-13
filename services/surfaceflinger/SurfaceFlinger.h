@@ -668,7 +668,7 @@ private:
     // Restrict layers to use two buffers in their bufferqueues.
     bool mLayerTripleBufferingDisabled = false;
 
-    bool mDamageUsesScreenReference;
+    bool mDamageUsesScreenReference = false;
 
 
     // these are thread safe

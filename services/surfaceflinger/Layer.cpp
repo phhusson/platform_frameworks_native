@@ -844,7 +844,10 @@ void Layer::setPerFrameData(const sp<const DisplayDevice>& displayDevice) {
 		    error = hwcLayer->setSurfaceDamage(realDamage);
 	    }
     } else {
-	    error = hwcLayer->setSurfaceDamage(surfaceDamageRegion);
+        if(surfaceDamageRegion.getBounds() == Rect::INVALID_RECT)
+            error = hwcLayer->setSurfaceDamage(visible);
+        else
+            error = hwcLayer->setSurfaceDamage(surfaceDamageRegion);
     }
     if (error != HWC2::Error::None) {
         ALOGE("[%s] Failed to set surface damage: %s (%d)", mName.string(),
