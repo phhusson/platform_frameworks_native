@@ -251,6 +251,7 @@ SurfaceFlinger::SurfaceFlinger()
     if(strstr(value, "hi3660")||
 		    strstr(value, "hi6250") ||
 		    strstr(value, "hi3670") ||
+		    strstr(value, "hi3650") ||
 		    strstr(value, "kirin970")) {
 	    mDamageUsesScreenReference = true;
     }
