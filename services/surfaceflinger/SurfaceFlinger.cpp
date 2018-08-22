@@ -291,6 +291,24 @@ SurfaceFlinger::SurfaceFlinger() : SurfaceFlinger(SkipInitialization) {
             mPrimaryDisplayOrientation = DisplayState::eOrientationDefault;
             break;
     }
+
+    if(primaryDisplayOrientation == V1_1::DisplayOrientation::ORIENTATION_0) {
+        int sfRotation = property_get_int32("ro.sf.hwrotation", -1);
+        switch(sfRotation) {
+            case 0:
+                mPrimaryDisplayOrientation = DisplayState::eOrientationDefault;
+                break;
+            case 90:
+                mPrimaryDisplayOrientation = DisplayState::eOrientation90;
+                break;
+            case 180:
+                mPrimaryDisplayOrientation = DisplayState::eOrientation180;
+                break;
+            case 270:
+                mPrimaryDisplayOrientation = DisplayState::eOrientation270;
+                break;
+        }
+    }
     ALOGV("Primary Display Orientation is set to %2d.", mPrimaryDisplayOrientation);
 
     mPrimaryDispSync.init(SurfaceFlinger::hasSyncFramework, SurfaceFlinger::dispSyncPresentTimeOffset);
