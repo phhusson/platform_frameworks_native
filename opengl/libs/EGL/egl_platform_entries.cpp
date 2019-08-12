@@ -459,8 +459,14 @@ EGLBoolean eglGetConfigAttribImpl(EGLDisplay dpy, EGLConfig config,
 // ----------------------------------------------------------------------------
 
 // Translates EGL color spaces to Android data spaces.
+static int samsungColorspace = -1;
 static android_dataspace dataSpaceFromEGLColorSpace(EGLint colorspace) {
+    if(samsungColorspace == -1) {
+        samsungColorspace = property_get_bool("persist.sys.phh.samsung_colorspace", false);
+    }
     if (colorspace == EGL_GL_COLORSPACE_LINEAR_KHR) {
+        if(samsungColorspace)
+            return HAL_DATASPACE_UNKNOWN;
         return HAL_DATASPACE_UNKNOWN;
     } else if (colorspace == EGL_GL_COLORSPACE_SRGB_KHR) {
         return HAL_DATASPACE_V0_SRGB;
