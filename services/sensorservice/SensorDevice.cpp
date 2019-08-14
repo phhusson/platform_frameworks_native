@@ -34,7 +34,9 @@
 #include <cinttypes>
 #include <thread>
 
+#include <android-base/properties.h>
 using namespace android::hardware::sensors;
+
 using namespace android::hardware::sensors::V1_0;
 using namespace android::hardware::sensors::V1_0::implementation;
 using android::hardware::sensors::V2_0::EventQueueFlagBits;
@@ -134,6 +136,8 @@ SensorDevice::SensorDevice()
 void SensorDevice::initializeSensorList() {
     float minPowerMa = 0.001; // 1 microAmp
 
+    if(::android::base::GetBoolProperty("persist.sys.phh.samsung_sensors", false))
+        setMode(5555);
     checkReturn(mSensors->getSensorsList(
             [&](const auto &list) {
                 const size_t count = list.size();
