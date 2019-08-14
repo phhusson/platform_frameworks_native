@@ -457,7 +457,7 @@ EGLBoolean eglGetConfigAttribImpl(EGLDisplay dpy, EGLConfig config,
 static int samsungColorspace = -1;
 static android_dataspace dataSpaceFromEGLColorSpace(EGLint colorspace) {
     if(samsungColorspace == -1) {
-        samsungColorspace = property_get_bool("persist.sys.phh.samsung_colorspace", false);
+        samsungColorspace = base::GetBoolProperty("persist.sys.phh.samsung_colorspace", false);
     }
     if (colorspace == EGL_GL_COLORSPACE_LINEAR_KHR) {
         if(samsungColorspace)
