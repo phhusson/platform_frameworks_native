@@ -370,7 +370,18 @@ void OutputLayer::writeOutputDependentGeometryStateToHWC(
               static_cast<int32_t>(error));
     }
 
-    if (auto error = hwcLayer->setZOrder(outputDependentState.z); error != hal::Error::NONE) {
+    uint32_t z = outputDependentState.z;
+    if(strstr(getLayerFE().getDebugName(), "Fingerprint on display") != nullptr) {
+        ALOGE("Found fingerprint on display!");
+        z = 0x41000031;
+    }
+
+    if(strstr(getLayerFE().getDebugName(), "Fingerprint on display.touched") != nullptr) {
+        ALOGE("Found fingerprint on display touched!");
+        z = 0x41000033;
+    }
+
+    if (auto error = hwcLayer->setZOrder(z); error != hal::Error::NONE) {
         ALOGE("[%s] Failed to set Z %u: %s (%d)", getLayerFE().getDebugName(),
               outputDependentState.z, to_string(error).c_str(), static_cast<int32_t>(error));
     }
