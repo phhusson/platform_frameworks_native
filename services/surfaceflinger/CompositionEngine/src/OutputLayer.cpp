@@ -24,6 +24,7 @@
 #include <compositionengine/impl/OutputLayer.h>
 #include <compositionengine/impl/OutputLayerCompositionState.h>
 #include <cstdint>
+#include <cutils/properties.h>
 
 // TODO(b/129481165): remove the #pragma below and fix conversion issues
 #pragma clang diagnostic push
@@ -33,6 +34,10 @@
 
 // TODO(b/129481165): remove the #pragma below and fix conversion issues
 #pragma clang diagnostic pop // ignored "-Wconversion"
+
+static bool sCheckedProps = false;
+static bool sBBKFod = false;
+static bool sXiaomiFod = false;
 
 namespace android::compositionengine {
 
@@ -405,14 +410,30 @@ void OutputLayer::writeOutputDependentGeometryStateToHWC(HWC2::Layer* hwcLayer,
               sourceCrop.bottom, to_string(error).c_str(), static_cast<int32_t>(error));
     }
 
+    if(!sCheckedProps) {
+        sCheckedProps = true;
+        sBBKFod = property_get_bool("persist.sys.phh.fod.bbk", false);
+        sXiaomiFod = property_get_bool("persist.sys.phh.fod.xiaomi", false);
+    }
+
     if(strstr(getLayerFE().getDebugName(), "Fingerprint on display") != nullptr) {
         ALOGE("Found fingerprint on display!");
         z = 0x41000031;
+        if(sBBKFod) {
+            z = 0x41000031;
+        } else if(sXiaomiFod) {
+            z |= 0x1000000;
+        }
     }
 
     if(strstr(getLayerFE().getDebugName(), "Fingerprint on display.touched") != nullptr) {
         ALOGE("Found fingerprint on display touched!");
         z = 0x41000033;
+        if(sBBKFod) {
+            z = 0x41000033;
+        } else if(sXiaomiFod) {
+            z |= 0x2000000;
+        }
     }
 
     if (auto error = hwcLayer->setZOrder(z); error != hal::Error::NONE) {
