@@ -34,6 +34,7 @@
 #include <ui/GraphicBuffer.h>
 #include <utils/Errors.h>
 #include <utils/Trace.h>
+#include <android-base/properties.h>
 
 #include "../Layer.h" // needed only for debugging
 #include "../Promise.h"
@@ -500,12 +501,22 @@ status_t HWComposer::getDeviceCompositionChanges(
 
     hal::Error error = hal::Error::NONE;
 
+    static int forceNoPresentOrValidate = -1;
+    if(forceNoPresentOrValidate == -1) {
+        bool res = android::base::GetBoolProperty("persist.sys.phh.no_present_or_validate", false);
+        if(res) {
+            forceNoPresentOrValidate = 1;
+        } else {
+            forceNoPresentOrValidate = 0;
+        }
+    }
+
     // First try to skip validate altogether when there is no client
     // composition.  When there is client composition, since we haven't
     // rendered to the client target yet, we should not attempt to skip
     // validate.
     displayData.validateWasSkipped = false;
-    if (!frameUsesClientComposition) {
+    if (forceNoPresentOrValidate == 0 && !frameUsesClientComposition) {
         sp<Fence> outPresentFence;
         uint32_t state = UINT32_MAX;
         error = hwcDisplay->presentOrValidate(&numTypes, &numRequests, &outPresentFence , &state);
