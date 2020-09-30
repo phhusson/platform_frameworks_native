@@ -22,6 +22,7 @@
 #include "convertV2_1.h"
 
 #include <android-base/logging.h>
+#include <android-base/properties.h>
 #include <android/util/ProtoOutputStream.h>
 #include <frameworks/base/core/proto/android/service/sensor_service.proto.h>
 #include <sensors/convert.h>
@@ -129,8 +130,12 @@ SensorDevice::SensorDevice()
 
     initializeSensorList();
 
-    mIsDirectReportSupported =
-            (checkReturnAndGetStatus(mSensors->unregisterDirectChannel(-1)) != INVALID_OPERATION);
+    if(::android::base::GetBoolProperty("persist.sys.phh.disable_sensor_direct_report", false)) {
+        mIsDirectReportSupported = false;
+    } else {
+        mIsDirectReportSupported =
+                (checkReturnAndGetStatus(mSensors->unregisterDirectChannel(-1)) != INVALID_OPERATION);
+    }
 }
 
 void SensorDevice::initializeSensorList() {
