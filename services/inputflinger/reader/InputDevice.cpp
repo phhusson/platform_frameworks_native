@@ -303,7 +303,10 @@ void InputDevice::configure(nsecs_t when, const InputReaderConfiguration* config
             mAssociatedDisplayUniqueId = std::nullopt;
             mAssociatedViewport = std::nullopt;
             // Find the display port that corresponds to the current input port.
-            const std::string& inputPort = mIdentifier.location;
+            std::string inputPort = mIdentifier.location;
+            if (inputPort.empty()) {
+                inputPort = mIdentifier.uniqueId;
+            }
             if (!inputPort.empty()) {
                 const std::unordered_map<std::string, uint8_t>& ports = config->portAssociations;
                 const auto& displayPort = ports.find(inputPort);
