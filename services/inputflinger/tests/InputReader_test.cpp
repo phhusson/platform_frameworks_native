@@ -20,6 +20,7 @@
 #include <InputReader.h>
 #include <InputReaderBase.h>
 #include <InputReaderFactory.h>
+#include <JoystickInputMapper.h>
 #include <KeyboardInputMapper.h>
 #include <MultiTouchInputMapper.h>
 #include <SingleTouchInputMapper.h>
@@ -250,6 +251,10 @@ public:
 
     void addInputPortAssociation(const std::string& inputPort, uint8_t displayPort) {
         mConfig.portAssociations.insert({inputPort, displayPort});
+    }
+
+    void removeInputPortAssociation(const std::string& inputPort) {
+        mConfig.portAssociations.erase(inputPort);
     }
 
     void addDisabledDevice(int32_t deviceId) { mConfig.disabledDevices.insert(deviceId); }
@@ -7335,5 +7340,100 @@ TEST_F(MultiTouchInputMapperTest_SurfaceRange, Viewports_SurfaceRange_270) {
     constexpr int32_t xExpected = DISPLAY_HEIGHT - y;
     constexpr int32_t yExpected = (x + 1) - DISPLAY_WIDTH / 4;
     processPositionAndVerify(mapper, x - 1, y, x + 1, y, xExpected, yExpected);
+}
+class JoystickInputMapperTest : public InputMapperTest {
+    protected:
+    const std::string PRIMARY_UNIQUE_ID = "local:0";
+    const std::string SECONDARY_UNIQUE_ID = "local:1";
+    static const uint8_t HDMI1;
+    static const uint8_t HDMI2;
+    virtual void SetUp() override {
+        InputMapperTest::SetUp(INPUT_DEVICE_CLASS_JOYSTICK);
+    }
+
+    static void process(InputMapper& mapper, nsecs_t when, int32_t type, int32_t code,
+                        int32_t value) {
+        RawEvent event;
+        event.when = when;
+        event.deviceId = mapper.getDeviceContext().getEventHubId();
+        event.type = type;
+        event.code = code;
+        event.value = value;
+        mapper.process(&event);
+    }
+
+    static void process(InputMapper& mapper, int x, int y) {
+        process(mapper, ARBITRARY_TIME, EV_ABS, ABS_X, x);
+        process(mapper, ARBITRARY_TIME, EV_ABS, ABS_Y, y);
+        process(mapper, ARBITRARY_TIME, EV_SYN, SYN_REPORT, 0);
+    }
+};
+
+const uint8_t JoystickInputMapperTest::HDMI1 = 0;
+const uint8_t JoystickInputMapperTest::HDMI2 = 1;
+TEST_F(JoystickInputMapperTest, Configure_AssignsDisplayPort) {
+    NotifyMotionArgs args;
+
+    // Prepare test
+    setDisplayInfoAndReconfigure(DISPLAY_ID, DISPLAY_WIDTH, DISPLAY_HEIGHT, DISPLAY_ORIENTATION_0,
+                                 PRIMARY_UNIQUE_ID, HDMI1, ViewportType::VIEWPORT_INTERNAL);
+
+    mFakeEventHub->addAbsoluteAxis(EVENTHUB_ID, ABS_X, 0, 255, 15, 0, 0);
+    mFakeEventHub->addAbsoluteAxis(EVENTHUB_ID, ABS_Y, 0, 255, 15, 0, 0);
+
+    JoystickInputMapper& mapper =
+            addMapperAndConfigure<JoystickInputMapper>();
+    // 1. Ensure when initially unmapped, that event goes to focused display
+    // Center joystick
+    process(mapper, 127, 127);
+    ASSERT_NO_FATAL_FAILURE(mFakeListener->assertNotifyMotionWasCalled(&args));
+
+    // Joystick hasn't been mapped to any display yet, so it goes where the focus is
+    ASSERT_EQ(args.displayId, ADISPLAY_ID_NONE);
+    ASSERT_TRUE(mDevice->isEnabled());
+
+    // 2. Ensure that when mapping joystick to non-existing display, device is disabled
+
+    // Assign joystick to a non-existing display
+    mFakePolicy->addInputPortAssociation(DEVICE_LOCATION, HDMI2);
+    configureDevice(InputReaderConfiguration::CHANGE_DISPLAY_INFO);
+
+    // We don't test mapper's return value here, because it may or may not have a notion
+    // of whether the viewport exists
+    ASSERT_FALSE(mDevice->isEnabled());
+
+    // 3. Ensure that when joystick is mapped and screen is attached, events go to correct display
+    // Prepare second display.
+    constexpr int32_t newDisplayId = 37;
+    setDisplayInfoAndReconfigure(newDisplayId, DISPLAY_WIDTH, DISPLAY_HEIGHT, DISPLAY_ORIENTATION_0,
+                                 SECONDARY_UNIQUE_ID, HDMI2, ViewportType::VIEWPORT_EXTERNAL);
+    configureDevice(InputReaderConfiguration::CHANGE_DISPLAY_INFO);
+
+    // Device should be enabled after the associated display is found.
+    ASSERT_TRUE(mDevice->isEnabled());
+
+    // Send an event and ensure it goes to the correct display
+    process(mapper, 40, 127);
+
+    ASSERT_NO_FATAL_FAILURE(mFakeListener->assertNotifyMotionWasCalled(&args));
+
+    ASSERT_EQ(args.displayId, newDisplayId);
+    ASSERT_EQ(args.pointerCount, 1U);
+
+    // ABS_{X,Y} are mapped to GENERIC_{1,2} because FakeInputReaderContext does no axis mapping
+    ASSERT_NEAR(args.pointerCoords[0].getAxisValue(AMOTION_EVENT_AXIS_GENERIC_1), 0.16, 0.02f);
+    ASSERT_NEAR(args.pointerCoords[0].getAxisValue(AMOTION_EVENT_AXIS_GENERIC_2), 0.5, 0.02f);
+
+    // 4. Ensure that when removing association again, joystick goes back to focus-based display
+    // Remove association
+    mFakePolicy->removeInputPortAssociation(DEVICE_LOCATION);
+    configureDevice(InputReaderConfiguration::CHANGE_DISPLAY_INFO);
+
+    process(mapper, 127, 127);
+
+    ASSERT_NO_FATAL_FAILURE(mFakeListener->assertNotifyMotionWasCalled(&args));
+
+    // And check we're back to focus-based
+    ASSERT_EQ(args.displayId, ADISPLAY_ID_NONE);
 }
 } // namespace android

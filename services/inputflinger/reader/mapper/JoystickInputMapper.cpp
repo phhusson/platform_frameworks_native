@@ -196,6 +196,8 @@ void JoystickInputMapper::configure(nsecs_t when, const InputReaderConfiguration
             }
         }
     }
+    std::optional<DisplayViewport> viewport = getDeviceContext().getAssociatedViewport();
+    mDisplayId = viewport ? viewport->displayId : ADISPLAY_ID_NONE;
 }
 
 bool JoystickInputMapper::haveAxis(int32_t axisId) {
@@ -334,7 +336,7 @@ void JoystickInputMapper::sync(nsecs_t when, bool force) {
     uint32_t policyFlags = 0;
 
     NotifyMotionArgs args(getContext()->getNextId(), when, getDeviceId(), AINPUT_SOURCE_JOYSTICK,
-                          ADISPLAY_ID_NONE, policyFlags, AMOTION_EVENT_ACTION_MOVE, 0, 0, metaState,
+                          mDisplayId, policyFlags, AMOTION_EVENT_ACTION_MOVE, 0, 0, metaState,
                           buttonState, MotionClassification::NONE, AMOTION_EVENT_EDGE_FLAG_NONE, 1,
                           &pointerProperties, &pointerCoords, 0, 0,
                           AMOTION_EVENT_INVALID_CURSOR_POSITION,

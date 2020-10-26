@@ -105,6 +105,8 @@ private:
 
     static void addMotionRange(int32_t axisId, const Axis& axis, InputDeviceInfo* info);
     static void setPointerCoordsAxisValue(PointerCoords* pointerCoords, int32_t axis, float value);
+
+    int32_t mDisplayId = ADISPLAY_ID_NONE;
 };
 
 } // namespace android
