@@ -409,6 +409,7 @@ const String8& Sensor::getStringType() const {
 }
 
 const String8& Sensor::getRequiredPermission() const {
+    if (mRequiredPermission == "com.samsung.permission.SSENSOR") return mFakeRequiredPermission;
     return mRequiredPermission;
 }
 
