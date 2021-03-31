@@ -125,6 +125,7 @@ private:
     uint32_t mFifoMaxEventCount;
     String8 mStringType;
     String8 mRequiredPermission;
+    String8 mFakeRequiredPermission;
     bool mRequiredPermissionRuntime = false;
     int32_t mRequiredAppOp;
     int32_t mMaxDelay;
