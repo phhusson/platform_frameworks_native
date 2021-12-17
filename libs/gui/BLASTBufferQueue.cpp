@@ -32,8 +32,18 @@
 #include <utils/Trace.h>
 
 #include <private/gui/ComposerService.h>
+#include <cutils/properties.h>
 
 #include <chrono>
+
+
+static bool sCheckedProps = false;
+static bool sSamsungFod = false;
+static void init_fod_props() {
+    if(sCheckedProps) return;
+    sCheckedProps = true;
+    sSamsungFod = property_get_bool("persist.sys.phh.fod.samsung", false);
+}
 
 using namespace std::chrono_literals;
 
@@ -140,9 +150,14 @@ BLASTBufferQueue::BLASTBufferQueue(const std::string& name)
 
     // safe default, most producers are expected to override this
     mProducer->setMaxDequeuedBufferCount(2);
+    uint64_t usage = GraphicBuffer::USAGE_HW_COMPOSER |
+        GraphicBuffer::USAGE_HW_TEXTURE;
+    init_fod_props();
+    if(sSamsungFod && name.find("SurfaceView[UdfpsController]") != std::string::npos) {
+	    usage |= 0x400000000LL;
+    }
     mBufferItemConsumer = new BLASTBufferItemConsumer(mConsumer,
-                                                      GraphicBuffer::USAGE_HW_COMPOSER |
-                                                              GraphicBuffer::USAGE_HW_TEXTURE,
+                                                      usage,
                                                       1, false, this);
     static int32_t id = 0;
     mName = name + "#" + std::to_string(id);
