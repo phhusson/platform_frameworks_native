@@ -428,6 +428,8 @@ void OutputLayer::writeOutputDependentGeometryStateToHWC(HWC2::Layer* hwcLayer,
             z = 0x41000031;
         } else if(sXiaomiFod) {
             z |= 0x1000000;
+        } else if(sAsusFod) {
+            hwcLayer->setLayerClass(4);
         }
     }
 
@@ -437,6 +439,8 @@ void OutputLayer::writeOutputDependentGeometryStateToHWC(HWC2::Layer* hwcLayer,
             z = 0x41000033;
         } else if(sXiaomiFod) {
             z |= 0x2000000;
+        } else if(sAsusFod) {
+            hwcLayer->setLayerClass(5);
         }
     }
 
