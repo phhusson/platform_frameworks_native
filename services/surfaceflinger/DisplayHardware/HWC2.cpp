@@ -872,6 +872,16 @@ Error Layer::setZOrder(uint32_t z)
     return static_cast<Error>(intError);
 }
 
+Error Layer::setLayerClass(uint32_t val)
+{
+    if (CC_UNLIKELY(!mDisplay)) {
+        return Error::BAD_DISPLAY;
+    }
+
+    auto intError = mComposer.setLayerClass(mDisplay->getId(), mId, val);
+    return static_cast<Error>(intError);
+}
+
 // Composer HAL 2.3
 Error Layer::setColorTransform(const android::mat4& matrix) {
     if (CC_UNLIKELY(!mDisplay)) {

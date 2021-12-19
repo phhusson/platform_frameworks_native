@@ -231,6 +231,9 @@ public:
             std::vector<IComposerClient::LayerGenericMetadataKey>* outKeys) = 0;
     virtual Error getClientTargetProperty(
             Display display, IComposerClient::ClientTargetProperty* outClientTargetProperty) = 0;
+
+    // Asus proprietary
+    virtual Error setLayerClass(Display display, Layer layer, uint32_t layerClass);
 };
 
 namespace impl {
@@ -467,10 +470,13 @@ public:
                                         bool mandatory, const std::vector<uint8_t>& value) override;
     V2_4::Error getLayerGenericMetadataKeys(
             std::vector<IComposerClient::LayerGenericMetadataKey>* outKeys) override;
+
     Error getClientTargetProperty(
             Display display,
             IComposerClient::ClientTargetProperty* outClientTargetProperty) override;
 
+    // Asus proprietary
+    Error setLayerClass(Display display, Layer layer, uint32_t layerClass);
 private:
     class CommandWriter : public CommandWriterBase {
     public:
