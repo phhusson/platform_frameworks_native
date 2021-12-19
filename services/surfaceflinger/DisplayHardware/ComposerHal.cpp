@@ -1220,6 +1220,13 @@ V2_4::Error Composer::setLayerGenericMetadata(Display display, Layer layer, cons
     return Error::NONE;
 }
 
+Error Composer::setLayerClass(Display display, Layer layer, uint32_t layerClass) {
+    mWriter.selectDisplay(display);
+    mWriter.selectLayer(layer);
+    mWriter.vendor800_1(layerClass);
+    return Error::NONE;
+}
+
 V2_4::Error Composer::getLayerGenericMetadataKeys(
         std::vector<IComposerClient::LayerGenericMetadataKey>* outKeys) {
     using Error = V2_4::Error;
