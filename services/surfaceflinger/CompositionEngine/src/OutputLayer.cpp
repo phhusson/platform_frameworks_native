@@ -38,6 +38,7 @@
 static bool sCheckedProps = false;
 static bool sBBKFod = false;
 static bool sXiaomiFod = false;
+static bool sAsusFod = false;
 
 namespace android::compositionengine {
 
@@ -414,11 +415,15 @@ void OutputLayer::writeOutputDependentGeometryStateToHWC(HWC2::Layer* hwcLayer,
         sCheckedProps = true;
         sBBKFod = property_get_bool("persist.sys.phh.fod.bbk", false);
         sXiaomiFod = property_get_bool("persist.sys.phh.fod.xiaomi", false);
+        sAsusFod = property_get_bool("persist.sys.phh.fod.asus", false);
     }
 
-    if(strstr(getLayerFE().getDebugName(), "Fingerprint on display") != nullptr) {
+#define UDFPS_BIOMETRIC_PROMPT_LAYER_NAME "BiometricPrompt#0"
+#define UDFPS_LAYER_NAME "UdfpsController#0"
+#define UDFPS_TOUCHED_LAYER_NAME "SurfaceView[UdfpsController](BLAST)#0"
+    if ((strcmp(getLayerFE().getDebugName(), UDFPS_LAYER_NAME) == 0)
+            || (strcmp(getLayerFE().getDebugName(), UDFPS_BIOMETRIC_PROMPT_LAYER_NAME) == 0)) {
         ALOGE("Found fingerprint on display!");
-        z = 0x41000031;
         if(sBBKFod) {
             z = 0x41000031;
         } else if(sXiaomiFod) {
@@ -426,9 +431,8 @@ void OutputLayer::writeOutputDependentGeometryStateToHWC(HWC2::Layer* hwcLayer,
         }
     }
 
-    if(strstr(getLayerFE().getDebugName(), "Fingerprint on display.touched") != nullptr) {
+    if (strcmp(getLayerFE().getDebugName(), UDFPS_TOUCHED_LAYER_NAME) == 0) {
         ALOGE("Found fingerprint on display touched!");
-        z = 0x41000033;
         if(sBBKFod) {
             z = 0x41000033;
         } else if(sXiaomiFod) {
