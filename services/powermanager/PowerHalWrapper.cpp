@@ -209,6 +209,10 @@ HalResult<void> AidlHalWrapper::setMode(Mode mode, bool enabled) {
     std::unique_lock<std::mutex> lock(mModeMutex);
     size_t idx = static_cast<size_t>(mode);
 
+    if (mHandleSeh != nullptr && mode == Mode::INTERACTIVE) {
+        mHandleSeh->setInteractiveAsync(enabled, false);
+    }
+
     // Quick return if mode is not supported by HAL
     if (idx >= mModeSupportedArray.size() || mModeSupportedArray[idx] == HalSupport::OFF) {
         ALOGV("Skipped setMode %s because Power HAL doesn't support it", toString(mode).c_str());
@@ -246,6 +250,72 @@ HalResult<int64_t> AidlHalWrapper::getHintSessionPreferredRate() {
     int64_t rate = -1;
     auto result = mHandle->getHintSessionPreferredRate(&rate);
     return HalResult<int64_t>::fromStatus(result, rate);
+}
+
+HalResult<void> HidlHalWrapperSeh::setBoost(Boost boost, int32_t durationMs) {
+    if (boost == Boost::INTERACTION) {
+        return sendPowerHint(V1_0::PowerHint::INTERACTION, durationMs);
+    } else {
+        ALOGV("Skipped setBoost %s because Power HAL AIDL not available", toString(boost).c_str());
+        return HalResult<void>::unsupported();
+    }
+}
+
+HalResult<void> HidlHalWrapperSeh::setMode(Mode mode, bool enabled) {
+    uint32_t data = enabled ? 1 : 0;
+    switch (mode) {
+        case Mode::LAUNCH:
+            return sendPowerHint(V1_0::PowerHint::LAUNCH, data);
+        case Mode::LOW_POWER:
+            return sendPowerHint(V1_0::PowerHint::LOW_POWER, data);
+        case Mode::SUSTAINED_PERFORMANCE:
+            return sendPowerHint(V1_0::PowerHint::SUSTAINED_PERFORMANCE, data);
+        case Mode::VR:
+            return sendPowerHint(V1_0::PowerHint::VR_MODE, data);
+        case Mode::INTERACTIVE:
+            return setInteractive(enabled);
+        case Mode::DOUBLE_TAP_TO_WAKE:
+            return setFeature(V1_0::Feature::POWER_FEATURE_DOUBLE_TAP_TO_WAKE, enabled);
+        default:
+            ALOGV("Skipped setMode %s because Power HAL AIDL not available",
+                  toString(mode).c_str());
+            return HalResult<void>::unsupported();
+    }
+}
+
+HalResult<void> HidlHalWrapperSeh::sendPowerHint(V1_0::PowerHint hintId, uint32_t data) {
+    if(mHandle11 != nullptr) {
+        auto ret = mHandle11->powerHintAsync(hintId, data);
+        return HalResult<void>::fromReturn(ret);
+    } else {
+        auto ret = mHandle10->powerHint(hintId, data);
+        return HalResult<void>::fromReturn(ret);
+    }
+}
+
+HalResult<void> HidlHalWrapperSeh::setInteractive(bool enabled) {
+    if(mHandleSeh != nullptr) {
+        mHandleSeh->setInteractiveAsync(enabled, false);
+    }
+    auto ret = mHandle10->setInteractive(enabled);
+    return HalResult<void>::fromReturn(ret);
+}
+
+HalResult<void> HidlHalWrapperSeh::setFeature(V1_0::Feature feature, bool enabled) {
+    auto ret = mHandle10->setFeature(feature, enabled);
+    return HalResult<void>::fromReturn(ret);
+}
+
+HalResult<sp<Aidl::IPowerHintSession>> HidlHalWrapperSeh::createHintSession(
+        int32_t, int32_t, const std::vector<int32_t>& threadIds, int64_t) {
+    ALOGV("Skipped createHintSession(task num=%zu) because Power HAL not available",
+          threadIds.size());
+    return HalResult<sp<Aidl::IPowerHintSession>>::unsupported();
+}
+
+HalResult<int64_t> HidlHalWrapperSeh::getHintSessionPreferredRate() {
+    ALOGV("Skipped getHintSessionPreferredRate because Power HAL not available");
+    return HalResult<int64_t>::unsupported();
 }
 
 // -------------------------------------------------------------------------------------------------
