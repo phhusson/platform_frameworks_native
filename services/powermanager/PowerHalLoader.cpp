@@ -92,10 +92,11 @@ sp<vendor::samsung::hardware::miscpower::V2_0::ISehMiscPower> PowerHalLoader::lo
 }
 
 sp<V1_0::IPower> PowerHalLoader::loadHidlV1_0Locked() {
-    static bool gHalExists = true;
+    static bool gSecHalExists = true;
     static auto loadFnSec = []() { return V1_0::IPower::getService("power"); };
-    auto hal = loadHal<V1_0::IPower>(gHalExists, gHalHidlV1_0, loadFnSec, "HIDL v1.0");
+    auto hal = loadHal<V1_0::IPower>(gSecHalExists, gHalHidlV1_0, loadFnSec, "HIDL v1.0");
 
+    static bool gHalExists = true;
     static auto loadFn = []() { return V1_0::IPower::getService(); };
     if(hal == nullptr)
         hal = loadHal<V1_0::IPower>(gHalExists, gHalHidlV1_0, loadFn, "HIDL v1.0");
