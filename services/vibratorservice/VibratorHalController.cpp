@@ -59,6 +59,12 @@ std::shared_ptr<HalWrapper> connectHal(std::shared_ptr<CallbackScheduler> schedu
         return std::make_shared<AidlHalWrapper>(std::move(scheduler), aidlHal);
     }
 
+    aidlHal = waitForVintfService<Aidl::IVibrator>(String16("vibratorfeature"));
+    if (aidlHal) {
+        ALOGV("Successfully connected to Xiaomi Vibrator HAL AIDL service.");
+        return std::make_shared<AidlHalWrapper>(std::move(scheduler), aidlHal);
+    }
+
     sp<V1_0::IVibrator> halV1_0 = V1_0::IVibrator::getService();
     if (halV1_0 == nullptr) {
         ALOGV("Vibrator HAL service not available.");
